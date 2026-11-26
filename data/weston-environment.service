@@ -7,16 +7,8 @@ Before=xdg-desktop-portal-agl.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-# Wait for Weston socket to exist before advertising it
-ExecStartPre=/bin/sh -c 'until [ -S /run/user/1000/wayland-1 ]; do sleep 0.5; done'
-ExecStart=/usr/bin/systemctl --user set-environment \
-    XDG_CURRENT_DESKTOP=AGL \
-    WAYLAND_DISPLAY=wayland-1 \
-    XDG_SESSION_TYPE=wayland
-ExecStart=/usr/bin/dbus-update-activation-environment --systemd \
-    XDG_CURRENT_DESKTOP \
-    WAYLAND_DISPLAY \
-    XDG_SESSION_TYPE
+# set AGL_WAYLAND_SOCKETS in a drop-in to wait for other sockets
+ExecStart=/usr/libexec/agl-session-environment
 
 [Install]
 WantedBy=default.target

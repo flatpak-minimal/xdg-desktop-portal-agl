@@ -1,0 +1,36 @@
+#!/bin/sh
+# Wait for the compositor's Wayland socket, then publish it with the AGL
+# desktop name to the systemd user manager and the D-Bus activation
+# environment.
+#
+# AGL_WAYLAND_SOCKETS: names in $XDG_RUNTIME_DIR or absolute paths, tried in
+# order. agl-compositor serves wayland-0 and /run/wayland-0
+# (agl-compositor.socket); OE-Core's weston.socket serves /run/wayland-0.
+
+set -eu
+
+sockets=${AGL_WAYLAND_SOCKETS:-wayland-0 wayland-1 /run/wayland-0}
+
+find_socket() {
+    for name in $sockets; do
+        case $name in
+            /*) path=$name ;;
+            *) path=$XDG_RUNTIME_DIR/$name ;;
+        esac
+        if [ -S "$path" ]; then
+            echo "$name"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# The compositor may start after the user session.
+until display=$(find_socket); do
+    sleep 0.5
+done
+
+exec dbus-update-activation-environment --systemd \
+    XDG_CURRENT_DESKTOP=AGL \
+    WAYLAND_DISPLAY="$display" \
+    XDG_SESSION_TYPE=wayland

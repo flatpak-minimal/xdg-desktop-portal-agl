@@ -38,6 +38,18 @@ in `xdg-desktop-portal-agl.service`.
 | `XDP_AGL_CAPTURE_TIMEOUT_MS` | `5000` | How long one capture may wait on the compositor before giving up. The budget covers a whole capture, not each phase. Raise it on a slow target where a repaint can take longer than 5s; lowering it bounds how long a hung compositor holds a request open. |
 | `XDG_PICTURES_DIR` | from `user-dirs.dirs` | Where PNGs are written. Falls back to `$HOME/Pictures`, then `$XDG_STATE_HOME/xdg-desktop-portal-agl`. |
 
+### Session environment
+
+`weston-environment.service`, a user unit, runs `agl-session-environment`
+(installed to `/usr/libexec`). It waits for the compositor's Wayland socket
+and publishes `XDG_CURRENT_DESKTOP=AGL`, `WAYLAND_DISPLAY` and
+`XDG_SESSION_TYPE=wayland` to the systemd user manager and the D-Bus
+activation environment, so xdg-desktop-portal picks this backend.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `AGL_WAYLAND_SOCKETS` | `wayland-0 wayland-1 /run/wayland-0` | The sockets to look for, in order: a name in `$XDG_RUNTIME_DIR` or an absolute path. The first that exists becomes `WAYLAND_DISPLAY`. Set it in a drop-in for `weston-environment.service`. |
+
 ## TODO / known issues
 
 - weston_capture_v1 needs --debug on the compositor to work. agl-compositor
